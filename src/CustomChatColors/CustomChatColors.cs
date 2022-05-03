@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Rocket.Core.Plugins;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
@@ -27,7 +26,6 @@ namespace CustomChatColors
                 return;
             
             var playerId = player.playerID.steamID;
-            var uPlayer = UnturnedPlayer.FromCSteamID(playerId);
             if (Configuration.Instance.CustomColors.FirstOrDefault(x => x.PlayerId == playerId.m_SteamID) == null)
                 return;
 
@@ -40,31 +38,13 @@ namespace CustomChatColors
 
             var selectedEntry = Configuration.Instance.CustomColors.FirstOrDefault(x => x.PlayerId == playerId.m_SteamID);
 
-            isvisible = false;
-
-            switch (mode)
+            if (!ColorUtility.TryParseHtmlString($"#{selectedEntry.HexColorCode}", out Color ourColor))
             {
-                case EChatMode.GROUP:
-                    ChatManager.serverSendMessage($"[GROUP] <color=#{selectedEntry.HexColorCode}>{uPlayer.CharacterName}: {text}</color>", Color.grey, null, null, mode, uPlayer.SteamProfile.AvatarIcon.ToString(), true);
-                    break;
-                
-                case EChatMode.LOCAL:
-                    ChatManager.serverSendMessage($"[AREA] <color=#{selectedEntry.HexColorCode}>{uPlayer.CharacterName}: {text}</color>", Color.grey, null, null, mode, uPlayer.SteamProfile.AvatarIcon.ToString(), true);
-                    break;
-                
-                case EChatMode.GLOBAL:
-                    ChatManager.serverSendMessage($"<color=#{selectedEntry.HexColorCode}>{uPlayer.CharacterName}: {text}</color>", Color.grey, null, null, mode, uPlayer.SteamProfile.AvatarIcon.ToString(), true);
-                    break;
-                
-                case EChatMode.WELCOME:
-                    break;
-                case EChatMode.SAY:
-                    break;
-                
-                default:
-                    Rocket.Core.Logging.Logger.Log("How'd ya get here?");
-                    break;
+                Rocket.Core.Logging.Logger.LogWarning($"{selectedEntry.PlayerId} has an invalid color code! Please fix the entry in the config for their custom color to work!");
+                return;
             }
+
+            chatted = ourColor;
         }
 
         protected override void Unload()
